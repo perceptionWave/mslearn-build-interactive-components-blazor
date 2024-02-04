@@ -3,6 +3,24 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @inject OrderState OrderState
+@inject IJSRuntime JavaScript
+@* IJSRuntime is an interface in ASP.NET Core that enables communication between .NET and JavaScript. It is used to
+invoke JavaScript functions from .NET methods and vice versa 123.
+
+In Blazor, IJSRuntime is registered by the framework and can be injected into a .razor component using the @inject
+directive.
+
+To call a JavaScript function from .NET, you can use one of the following methods provided by IJSRuntime:
+
+InvokeAsync: Invokes the specified JavaScript function asynchronously and returns a Task<TValue> object that represents
+the result of the operation. The return type must be JSON serializable 2.
+InvokeVoidAsync: Invokes the specified JavaScript function asynchronously and does not return a value 1.
+To call a .NET method from JavaScript, you can use one of the following methods:
+
+DotNet.invokeMethodAsync: Invokes the specified .NET method asynchronously and returns a Promise object that represents
+the result of the operation. The return type must be JSON serializable 1.
+DotNet.invokeMethod: Invokes the specified .NET method synchronously and returns a value. This method is not recommended
+for use in production code because it can cause performance issues 1. *@
 
 <div class="main">
     <ul class="pizza-cards">
@@ -36,8 +54,10 @@
             @foreach (var configuredPizza in order.Pizzas)
             {
                 <div class="cart-item">
-                    <a @onclick="@(() => OrderState.RemoveConfiguredPizza(configuredPizza))" 
-                        class="delete-item">❌</a>
+                    <button type="button" class="close text-danger" aria-label="Close"
+                    @onclick="@(async () => await RemovePizzaConfirmation(configuredPizza))">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                     <div class="title">@(configuredPizza.Size)" @configuredPizza.Special!.Name</div>
                     <div class="item-price">
                         @configuredPizza.GetFormattedTotalPrice()
@@ -67,4 +87,25 @@
     protected override async Task OnInitializedAsync() => 
         specials = await HttpClient.GetFromJsonAsync<List<PizzaSpecial>>(
             $"{NavigationManager.BaseUri}specials");
+
+    async Task RemovePizzaConfirmation(Pizza removePizza)
+    {
+        var messageParams = new
+        {
+            title = "Remove Pizza?",
+            text = $"""Do you want to remove the "{removePizza.Special!.Name}" from your order?""",
+            icon = "warning",
+            buttons = new
+            {
+                abort = new { text = "No, leave it in my order", value = false },
+                confirm = new { text = "Yes, remove pizza", value = true }
+            },
+            dangerMode = true
+        };
+
+        if (await JavaScript.InvokeAsync<bool>("swal", messageParams))
+        {
+            OrderState.RemoveConfiguredPizza(removePizza);
+        }
+    }
 }
