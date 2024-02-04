@@ -61,20 +61,7 @@ internal static class SeedData
                 BasePrice = 9.99m,
                 ImageUrl = "img/pizzas/margherita.jpg",
             },
-<<<<<<< HEAD
-            new()
-            {
-                Id = 9,
-                Name = "Margherita Family Size",
-                Description = "24\" of pure tomatoes and basil",
-                BasePrice = 14.99m,
-                ImageUrl = "img/pizzas/margherita.jpg",
-                FixedSize = 24
-            },
         };
-=======
-        ];
->>>>>>> 5bedd1eacd4249fde3880d49740296272c052271
         db.Specials.AddRange(specials);
         return db.SaveChangesAsync();
     }
